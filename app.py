@@ -10,7 +10,7 @@ from shiny import reactive, render, req
 penguins_df = palmerpenguins.load_penguins()
 
 # Name of Project Page
-ui.page_opts(title="St_Cyr Penguin Data", fillable=True)
+ui.page_opts(title="St_Cyr Penguin Data", fillable=False)
 
 # Add a sidebar
 with ui.sidebar(open="open"):  
@@ -45,36 +45,36 @@ with ui.sidebar(open="open"):
 # Create tables and plots displaying all data
 ## Data Table and Grid
 with ui.layout_columns():  
-    with ui.card(full_screen=True):  
+    with ui.card(full_screen=False):  
         ui.h2("Penguins Table")        
         @render.data_frame
         def Penguins_Table():
-                return render.DataTable(penguins_df)
+                return render.DataTable(filtered_data())
                     
-    with ui.card(full_screen=True):
+    with ui.card(full_screen=False):
         ui.h2("Penguins Grid")
         
         @render.data_frame
         def render_Penguin_Grid():
-            return render.DataGrid(penguins_df)
+            return render.DataGrid(filtered_data())
 
 # Create Histograms and Scatterplot
 
-with ui.layout_columns(col_widths=(5, 10)):
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.h4("Penguin Histogram")
 
         @render_plotly
         def plotly_histogram():
-            return px.histogram(penguins_df, x="species", color="species")
+            return px.histogram(filtered_data(), x="species", color="species")
 
 
-with ui.layout_columns(col_widths=(5, 10)):
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.card_header("Seaborn Histogram")
         @render.plot(alt="Seaborn Histogram")
         def seaborn_histogram():
-            histplot = sns.histplot(data=penguins_df, x="body_mass_g", bins=input.seaborn_bin_count())
+            histplot = sns.histplot(data=filtered_data(), x="body_mass_g", bins=input.seaborn_bin_count())
             histplot.set_title("Penguins")
             histplot.set_xlabel("Mass")
             histplot.set_ylabel("Count")
@@ -82,15 +82,30 @@ with ui.layout_columns(col_widths=(5, 10)):
 
 
 ## Plotly Scatterplot
-with ui.layout_columns(col_widths=(2, 6)):
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.card_header("Plotly Scatterplot")
         @render_plotly
         def plotly_scatterplot():
-            return px.scatter(penguins_df, x="bill_length_mm",
+            return px.scatter(filtered_data(), x="bill_length_mm",
                           y="body_mass_g",
                           color="species",
                           title="Penguin Scatterplot",
                           labels={"bill_length_mm": "Bill Length mm",
                                   "body_mass_g": "Body Mass g"},
                           size_max=20,)
+
+
+# --------------------------------------------------------
+# Reactive calculations and effects
+# --------------------------------------------------------
+
+# Add a reactive calculation to filter the data
+# By decorating the function with @reactive, we can use the function to filter the data
+# The function will be called whenever an input functions used to generate that output changes.
+# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
+
+@reactive.calc
+def filtered_data():
+    return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+
