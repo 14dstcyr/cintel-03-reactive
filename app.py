@@ -60,16 +60,14 @@ with ui.layout_columns():
 
 # Create Histograms and Scatterplot
 
-with ui.layout_columns(col_widths=(5, 5)):
+with ui.layout_columns():
     with ui.card(full_screen=True):
         ui.h4("Penguin Histogram")
 
         @render_plotly
         def plotly_histogram():
-            return px.histogram(filtered_data(), x="species", color="species")
+            return px.histogram(filtered_data(), x="bill_length_mm", color="species")
 
-
-with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.card_header("Seaborn Histogram")
         @render.plot(alt="Seaborn Histogram")
@@ -82,7 +80,7 @@ with ui.layout_columns(col_widths=(5, 5)):
 
 
 ## Plotly Scatterplot
-with ui.layout_columns(col_widths=(5, 5)):
+with ui.layout_columns():
     with ui.card(full_screen=True):
         ui.card_header("Plotly Scatterplot")
         @render_plotly
@@ -108,4 +106,3 @@ with ui.layout_columns(col_widths=(5, 5)):
 @reactive.calc
 def filtered_data():
     return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
-
