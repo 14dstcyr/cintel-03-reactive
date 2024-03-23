@@ -35,6 +35,10 @@ with ui.sidebar(open="open"):
         inline=True,
     )
 
+    ui.input_checkbox_group("selected_islands_list", "Islands", ["Biscoe", "Dream", "Torgersen"], selected=["Biscoe"],
+       inline=True,
+                           )
+
     # Use ui.hr() to add a horizontal rule to the sidebar
     ui.hr()
     
@@ -60,14 +64,16 @@ with ui.layout_columns():
 
 # Create Histograms and Scatterplot
 
-with ui.layout_columns():
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.h4("Penguin Histogram")
 
         @render_plotly
         def plotly_histogram():
-            return px.histogram(filtered_data(), x="bill_length_mm", color="species")
+            return px.histogram(filtered_data(), x="species", color="species")
 
+
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.card_header("Seaborn Histogram")
         @render.plot(alt="Seaborn Histogram")
@@ -80,7 +86,7 @@ with ui.layout_columns():
 
 
 ## Plotly Scatterplot
-with ui.layout_columns():
+with ui.layout_columns(col_widths=(5, 5)):
     with ui.card(full_screen=True):
         ui.card_header("Plotly Scatterplot")
         @render_plotly
