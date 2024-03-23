@@ -4,7 +4,10 @@ from shinywidgets import render_plotly
 import palmerpenguins  # This package provides the Palmer Penguins dataset
 import pandas as pd
 import seaborn as sns
-from shiny import reactive, render, req
+from shiny import App, reactive, render, req
+from shiny.ui import output_code, output_plot
+import matplotlib.pyplot as plt
+from palmerpenguins import load_penguins
 
 # Use the built-in function to load the Palmer Penguins dataset.
 penguins_df = palmerpenguins.load_penguins()
@@ -35,10 +38,6 @@ with ui.sidebar(open="open"):
         inline=True,
     )
 
-    ui.input_checkbox_group("selected_islands_list", "Islands", ["Biscoe", "Dream", "Torgersen"], selected=["Biscoe"],
-       inline=True,
-                           )
-
     # Use ui.hr() to add a horizontal rule to the sidebar
     ui.hr()
     
@@ -62,53 +61,49 @@ with ui.layout_columns():
         def render_Penguin_Grid():
             return render.DataGrid(filtered_data())
 
-# Create Histograms and Scatterplot
+app_ui = ui.page_fluid(
+    ui.output_plot(
+    "plot",
+    click=True,  
+    dblclick=True,  
+    hover=True,  
+    brush=True,  
+),
 
-with ui.layout_columns(col_widths=(5, 5)):
-    with ui.card(full_screen=True):
-        ui.h4("Penguin Histogram")
+"Click:"
+output_code("clk", placeholder=True)
+"Double Click:"
+output_code("dblclk", placeholder=True)
+"Hover:"
+output_code("hvr", placeholder=True)
+"Brush"
+output_code("brsh", placeholder=True)
+)
+with ui.hold():
+    @render.plot(alt="A histogram")
+    def plot():
+        df = penguins_df() 
+        # df = load_penguins()
+        mass = df["body_mass_g"]
+        bill = df["bill_length_mm"]
 
-        @render_plotly
-        def plotly_histogram():
-            return px.histogram(filtered_data(), x="species", color="species")
+        plt.scatter(mass, bill)
+        plt.xlabel("Mass (g)")
+        plt.ylabel("Bill Length (mm)")
+        plt.title("Penguin Mass vs Bill Length")
 
+    @render.text
+    def clk():
+        return input.plot_click()
 
-with ui.layout_columns(col_widths=(5, 5)):
-    with ui.card(full_screen=True):
-        ui.card_header("Seaborn Histogram")
-        @render.plot(alt="Seaborn Histogram")
-        def seaborn_histogram():
-            histplot = sns.histplot(data=filtered_data(), x="body_mass_g", bins=input.seaborn_bin_count())
-            histplot.set_title("Penguins")
-            histplot.set_xlabel("Mass")
-            histplot.set_ylabel("Count")
-            return histplot
+    @render.text
+    def dblclk():
+        return input.plot_dblclick()
 
+    @render.text
+    def hvr():
+        return input.plot_hover()
 
-## Plotly Scatterplot
-with ui.layout_columns(col_widths=(5, 5)):
-    with ui.card(full_screen=True):
-        ui.card_header("Plotly Scatterplot")
-        @render_plotly
-        def plotly_scatterplot():
-            return px.scatter(filtered_data(), x="bill_length_mm",
-                          y="body_mass_g",
-                          color="species",
-                          title="Penguin Scatterplot",
-                          labels={"bill_length_mm": "Bill Length mm",
-                                  "body_mass_g": "Body Mass g"},
-                          size_max=20,)
-
-
-# --------------------------------------------------------
-# Reactive calculations and effects
-# --------------------------------------------------------
-
-# Add a reactive calculation to filter the data
-# By decorating the function with @reactive, we can use the function to filter the data
-# The function will be called whenever an input functions used to generate that output changes.
-# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
-
-@reactive.calc
-def filtered_data():
-    return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+    @render.text
+    def brsh():
+        return input.plot_brush()
